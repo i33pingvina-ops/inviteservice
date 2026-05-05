@@ -6,16 +6,22 @@ const templates = {
   wedding: [
     { id: 'wedding1', name: 'Классическая свадьба', image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=400', bgImage: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600' },
     { id: 'wedding2', name: 'Романтическая свадьба', image: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=400', bgImage: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=600' },
+    { id: 'wedding3', name: 'Богемная свадьба', image: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=400', bgImage: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600' },
   ],
   birthday: [
     { id: 'birthday1', name: 'Детский праздник', image: 'https://images.unsplash.com/photo-1464349153735-7db50ed83c5c?w=400', bgImage: 'https://images.unsplash.com/photo-1576411592141-29d7232a046c?w=600' },
-    { id: 'birthday2', name: 'Юбилей', image: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400', bgImage: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=600' },
+    { id: 'birthday2', name: 'Взрослый юбилей', image: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400', bgImage: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=600' },
+    { id: 'birthday3', name: 'Вечеринка в стиле 80-х', image: 'https://images.unsplash.com/photo-1505236858219-8359eb29e329?w=400', bgImage: 'https://images.unsplash.com/photo-1505236858219-8359eb29e329?w=600' },
   ],
   genderparty: [
     { id: 'gender1', name: 'Gender Reveal', image: 'https://images.unsplash.com/photo-1610962286282-f2c9b3cfbe17?w=400', bgImage: 'https://images.unsplash.com/photo-1610962286282-f2c9b3cfbe17?w=600' },
+    { id: 'gender2', name: 'Baby Shower', image: 'https://images.unsplash.com/photo-1525134479668-1bee5c7c6845?w=400', bgImage: 'https://images.unsplash.com/photo-1525134479668-1bee5c7c6845?w=600' },
+    { id: 'gender3', name: 'Розовый или голубой', image: 'https://images.unsplash.com/photo-1612404730960-5c71577fca11?w=400', bgImage: 'https://images.unsplash.com/photo-1612404730960-5c71577fca11?w=600' },
   ],
   anniversary: [
     { id: 'anniversary1', name: 'Золотая свадьба', image: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=400', bgImage: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600' },
+    { id: 'anniversary2', name: 'Серебряная свадьба', image: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=400', bgImage: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=600' },
+    { id: 'anniversary3', name: 'Корпоративный юбилей', image: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=400', bgImage: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=600' },
   ],
 };
 
@@ -44,7 +50,6 @@ const API = {
 
 // ==================== АВТОРИЗАЦИЯ ====================
 async function showLoginModal() {
-  // Удаляем старый модал, если есть
   const oldModal = document.getElementById('authModal');
   if (oldModal) oldModal.remove();
   
@@ -111,7 +116,7 @@ function logout() {
   location.href = '/index.html';
 }
 
-// ==================== ГЛАВНАЯ СТРАНИЦА ====================
+// ==================== ГЛАВНАЯ СТРАНИЦА (старая версия для совместимости) ====================
 async function renderMainPage() {
   const token = localStorage.getItem('token');
   const navButtons = document.getElementById('navButtons');
@@ -126,7 +131,6 @@ async function renderMainPage() {
     }
   }
 
-  // Если есть контент для главной страницы, заполняем его
   const contentDiv = document.getElementById('content');
   if (contentDiv) {
     const events = [
@@ -172,7 +176,7 @@ async function selectEvent(eventType) {
   document.getElementById('content').innerHTML = html;
 }
 
-// ==================== ВЫБОР ШАБЛОНА (общий) ====================
+// ==================== ВЫБОР ШАБЛОНА ====================
 async function selectTemplate(eventType, templateId) {
   const token = localStorage.getItem('token');
   if (!token) {
@@ -379,22 +383,7 @@ async function viewResponses(invitationId) {
   }
 }
 
-// ==================== НОВЫЕ ФУНКЦИИ ДЛЯ ГЛАВНОЙ СТРАНИЦЫ ====================
-function scrollToTemplates() {
-  const templatesSection = document.getElementById('templates');
-  if (templatesSection) {
-    templatesSection.scrollIntoView({ behavior: 'smooth' });
-  }
-}
-
-function navigateToEventSelection() {
-  location.href = '/index.html';
-}
-
-function selectEventType(type) {
-  location.href = '/index.html';
-}
-
+// ==================== НОВЫЕ ФУНКЦИИ ДЛЯ ГЛАВНОЙ СТРАНИЦЫ С ТАБАМИ ====================
 async function selectTemplateFromCatalog(eventType, templateId) {
   const token = localStorage.getItem('token');
   if (!token) {
@@ -411,6 +400,46 @@ async function selectTemplateFromCatalog(eventType, templateId) {
     location.href = `/editor.html?id=${invitation.id}`;
   } catch(e) {
     alert('Ошибка: ' + e.message);
+  }
+}
+
+function scrollToTemplates() {
+  const templatesSection = document.getElementById('templates');
+  if (templatesSection) {
+    templatesSection.scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+function navigateToEventSelection() {
+  location.href = '/index.html';
+}
+
+function navigateToFullCatalog() {
+  alert('Полный каталог из 50+ шаблонов будет доступен в следующем обновлении!');
+}
+
+function switchTab(tabId) {
+  // Обновляем активную кнопку
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.getAttribute('data-tab') === tabId) {
+      btn.classList.add('active');
+    }
+  });
+  
+  // Обновляем активную панель
+  document.querySelectorAll('.tab-pane').forEach(pane => {
+    pane.classList.remove('active');
+  });
+  const activePane = document.getElementById(`tab-${tabId}`);
+  if (activePane) {
+    activePane.classList.add('active');
+  }
+  
+  // Прокручиваем к каталогу
+  const templatesSection = document.getElementById('templates');
+  if (templatesSection) {
+    templatesSection.scrollIntoView({ behavior: 'smooth' });
   }
 }
 
@@ -431,8 +460,9 @@ window.loadDashboard = loadDashboard;
 window.showLoginModal = showLoginModal;
 window.updatePreview = updatePreview;
 
-// Новые функции для главной страницы
+// Новые функции для главной страницы с табами
+window.selectTemplateFromCatalog = selectTemplateFromCatalog;
 window.scrollToTemplates = scrollToTemplates;
 window.navigateToEventSelection = navigateToEventSelection;
-window.selectEventType = selectEventType;
-window.selectTemplateFromCatalog = selectTemplateFromCatalog;
+window.navigateToFullCatalog = navigateToFullCatalog;
+window.switchTab = switchTab;
