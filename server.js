@@ -22,9 +22,9 @@ app.use('/uploads', express.static('uploads'));
 const upload = multer({ dest: 'uploads/' });
 
 // ========== ХРАНЕНИЕ ДАННЫХ В ПАМЯТИ ==========
-const users = [];
-const invitations = [];
-const guestResponses = [];
+const users = [];           // { id, email, passwordHash }
+const invitations = [];     // { id, userId, eventType, templateId, title, description, eventDate, eventLocation, customQuestions, backgroundImageUrl, isPublished, paymentStatus, uniqueLink }
+const guestResponses = [];  // { id, invitationId, guestName, guestEmail, willAttend, answers, submittedAt }
 
 const JWT_SECRET = process.env.JWT_SECRET || 'my-super-secret-key-change-me';
 
@@ -125,59 +125,115 @@ app.put('/api/invitations/:id', auth, (req, res) => {
   const invitation = invitations.find(inv => inv.id === req.params.id && inv.userId === req.userId);
   if (!invitation) return res.status(404).json({ error: 'Приглашение не найдено' });
   
-  Object.assign(invitation, req.body);
+  // Обновляем только переданные поля
+  if (req.body.title !== undefined) invitation.title = req.body.title;
+  if (req.body.description !== undefined) invitation.description = req.body.description;
+  if (req.body.eventDate !== undefined) invitation.eventDate = req.body.eventDate;
+  if (req.body.eventLocation !== undefined) invitation.eventLocation = req.body.eventLocation;
+  if (req.body.customQuestions !== undefined) invitation.customQuestions = req.body.customQuestions;
+  if (req.body.backgroundImageUrl !== undefined) invitation.backgroundImageUrl = req.body.backgroundImageUrl;
+  
   res.json(invitation);
 });
 
+// Удаление приглашения
+app.delete('/api/invitations/:id', auth, (req, res) => {
+  const invitationIndex = invitations.findIndex(inv => inv.id === req.params.id && inv.userId === req.userId);
+  if (invitationIndex === -1) {
+    return res.status(404).json({ error: 'Приглашение не найдено' });
+  }
+  
+  // Удаляем приглашение
+  const deletedInvitation = invitations.splice(invitationIndex, 1)[0];
+  
+  // Удаляем все ответы гостей на это приглашение
+  const responsesToDelete = guestResponses.filter(r => r.invitationId === req.params.id);
+  responsesToDelete.forEach(r => {
+    const index = guestResponses.findIndex(gr => gr.id === r.id);
+    if (index !== -1) guestResponses.splice(index, 1);
+  });
+  
+  res.json({ message: 'Приглашение удалено', deletedId: req.params.id });
+});
+
+// Загрузка изображения
 app.post('/api/upload', auth, upload.single('image'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Нет файла' });
   const imageUrl = `/uploads/${req.file.filename}`;
   res.json({ url: imageUrl });
 });
 
+// Создание платежа (ДЕМО-РЕЖИМ без реальной оплаты)
 app.post('/api/create-payment', auth, (req, res) => {
   const { invitationId } = req.body;
   const invitation = invitations.find(inv => inv.id === invitationId && inv.userId === req.userId);
   if (!invitation) return res.status(404).json({ error: 'Приглашение не найдено' });
+  
+  // Демо-режим: сразу помечаем как оплаченное
   invitation.paymentStatus = true;
-  res.json({ id: 'demo', url: '#' });
+  res.json({ id: 'demo', status: 'success', message: 'Демо-оплата прошла успешно' });
 });
 
+// Публикация приглашения
 app.post('/api/publish/:id', auth, (req, res) => {
   const invitation = invitations.find(inv => inv.id === req.params.id && inv.userId === req.userId);
   if (!invitation) return res.status(404).json({ error: 'Приглашение не найдено' });
+  
   if (!invitation.paymentStatus) {
     return res.status(400).json({ error: 'Сначала оплатите публикацию' });
   }
+  
+  // Проверяем, что заполнены обязательные поля
+  if (!invitation.title || invitation.title.trim() === '') {
+    return res.status(400).json({ error: 'Укажите название события' });
+  }
+  if (!invitation.eventDate) {
+    return res.status(400).json({ error: 'Укажите дату события' });
+  }
+  if (!invitation.eventLocation || invitation.eventLocation.trim() === '') {
+    return res.status(400).json({ error: 'Укажите место проведения' });
+  }
+  
   invitation.isPublished = true;
-  res.json({ link: `/invite/${invitation.uniqueLink}` });
+  res.json({ 
+    link: `/invite/${invitation.uniqueLink}`,
+    fullUrl: `${req.protocol}://${req.get('host')}/invite/${invitation.uniqueLink}`
+  });
 });
 
-// ========== API ДЛЯ ГОСТЕЙ ==========
+// ========== API ДЛЯ ГОСТЕЙ (публичные) ==========
+// Получить приглашение по уникальной ссылке
 app.get('/api/invite/:link', (req, res) => {
   const invitation = invitations.find(inv => inv.uniqueLink === req.params.link && inv.isPublished === true);
   if (!invitation) return res.status(404).json({ error: 'Приглашение не найдено или не опубликовано' });
   res.json(invitation);
 });
 
+// Отправить ответ от гостя
 app.post('/api/respond/:link', (req, res) => {
   const invitation = invitations.find(inv => inv.uniqueLink === req.params.link);
   if (!invitation) return res.status(404).json({ error: 'Приглашение не найдено' });
   
   const { guestName, guestEmail, willAttend, answers } = req.body;
+  
+  if (!guestName || guestName.trim() === '') {
+    return res.status(400).json({ error: 'Укажите ваше имя' });
+  }
+  
   const response = {
     id: uuidv4(),
     invitationId: invitation.id,
-    guestName: guestName || 'Аноним',
+    guestName: guestName.trim(),
     guestEmail: guestEmail || '',
     willAttend: willAttend === true || willAttend === 'true',
     answers: answers || [],
     submittedAt: new Date()
   };
   guestResponses.push(response);
-  res.json({ message: 'Спасибо! Ваш ответ сохранён' });
+  res.json({ message: 'Спасибо! Ваш ответ сохранён', responseId: response.id });
 });
 
+// Получить все ответы на приглашение (только для владельца)
 app.get('/api/responses/:invitationId', auth, (req, res) => {
   const invitation = invitations.find(inv => inv.id === req.params.invitationId && inv.userId === req.userId);
   if (!invitation) return res.status(403).json({ error: 'Нет доступа' });
@@ -185,22 +241,46 @@ app.get('/api/responses/:invitationId', auth, (req, res) => {
   res.json(responses);
 });
 
+// ========== СТАТИЧЕСКИЕ ФАЙЛЫ ==========
 // Страница просмотра приглашения для гостя
 app.get('/invite/:link', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'invite-view.html'));
 });
 
+// Для всех остальных маршрутов отдаём index.html (для поддержки клиентского роутинга)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// ========== ЗАПУСК СЕРВЕРА ==========
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`
-╔════════════════════════════════════════╗
-║   🚀 Сервер запущен!                    ║
-║   📱 Откройте: http://localhost:${PORT}    ║
-║   💾 Данные хранятся в памяти            ║
-╚════════════════════════════════════════╝
+╔══════════════════════════════════════════════════════════╗
+║                                                          ║
+║   🚀 SERVER INVITE-SERVICE ЗАПУЩЕН!                      ║
+║                                                          ║
+║   📱 Локальный адрес: http://localhost:${PORT}              ║
+║                                                          ║
+║   💾 Данные хранятся в памяти                            ║
+║   ⚡ Демо-режим: оплата не требуется                    ║
+║                                                          ║
+║   📋 Доступные эндпоинты:                               ║
+║      POST   /api/register     - регистрация             ║
+║      POST   /api/login        - вход                    ║
+║      GET    /api/user         - профиль                 ║
+║      GET    /api/user/invitations - мои приглашения     ║
+║      POST   /api/invitations  - создать приглашение     ║
+║      GET    /api/invitations/:id - получить приглашение ║
+║      PUT    /api/invitations/:id - обновить приглашение ║
+║      DELETE /api/invitations/:id - удалить приглашение  ║
+║      POST   /api/upload       - загрузить фото          ║
+║      POST   /api/create-payment - демо-оплата           ║
+║      POST   /api/publish/:id  - опубликовать            ║
+║      GET    /api/invite/:link - получить приглашение    ║
+║      POST   /api/respond/:link - отправить ответ        ║
+║      GET    /api/responses/:invitationId - ответы       ║
+║                                                          ║
+╚══════════════════════════════════════════════════════════╝
   `);
 });
