@@ -144,12 +144,64 @@
       color: #666;
     }
 
+    /* Стили для табов */
+    .tabs-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .tabs-header {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 40px;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 15px;
+    }
+
+    .tab-btn {
+      background: transparent;
+      color: #666;
+      padding: 12px 28px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin: 0;
+    }
+
+    .tab-btn:hover {
+      background: #f0f0f0;
+      color: #667eea;
+      transform: translateY(-2px);
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .tabs-content {
+      position: relative;
+    }
+
+    .tab-pane {
+      display: none;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .tab-pane.active {
+      display: block;
+    }
+
     .catalog-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 30px;
-      max-width: 1200px;
-      margin: 0 auto;
     }
 
     .template-card {
@@ -324,11 +376,21 @@
       }
     }
 
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
     @media (max-width: 768px) {
       .hero h1 { font-size: 36px; }
       .hero p { font-size: 16px; }
       .section-title { font-size: 28px; }
       .section { padding: 50px 20px; }
+      .tab-btn { padding: 8px 16px; font-size: 14px; }
     }
   </style>
 </head>
@@ -411,15 +473,37 @@
     </div>
   </section>
 
-  <!-- КАТАЛОГ ШАБЛОНОВ -->
+  <!-- КАТАЛОГ ШАБЛОНОВ С ТАБАМИ -->
   <section class="section" id="templates">
     <div class="container">
-      <h2 class="section-title">Популярные <span>шаблоны</span></h2>
-      <div class="catalog-grid" id="catalogGrid">
-        <!-- Шаблоны загрузятся через JavaScript -->
+      <h2 class="section-title">Выберите <span>шаблон</span> для вашего мероприятия</h2>
+      
+      <div class="tabs-container">
+        <div class="tabs-header">
+          <button class="tab-btn active" data-tab="wedding">💒 Свадьба</button>
+          <button class="tab-btn" data-tab="birthday">🎂 День рождения</button>
+          <button class="tab-btn" data-tab="anniversary">🎉 Юбилей</button>
+          <button class="tab-btn" data-tab="genderparty">🎀 Gender Party</button>
+        </div>
+        
+        <div class="tabs-content">
+          <div class="tab-pane active" id="tab-wedding">
+            <div class="catalog-grid" id="weddingGrid"></div>
+          </div>
+          <div class="tab-pane" id="tab-birthday">
+            <div class="catalog-grid" id="birthdayGrid"></div>
+          </div>
+          <div class="tab-pane" id="tab-anniversary">
+            <div class="catalog-grid" id="anniversaryGrid"></div>
+          </div>
+          <div class="tab-pane" id="tab-genderparty">
+            <div class="catalog-grid" id="genderpartyGrid"></div>
+          </div>
+        </div>
       </div>
+      
       <div style="text-align: center; margin-top: 40px;">
-        <button class="btn-secondary" onclick="location.href='/index.html'">Смотреть все 50+ шаблонов →</button>
+        <button class="btn-secondary" onclick="navigateToFullCatalog()">Смотреть все 50+ шаблонов →</button>
       </div>
     </div>
   </section>
@@ -529,10 +613,10 @@
         <div>
           <h4>Мероприятия</h4>
           <ul style="list-style: none; margin-top: 10px;">
-            <li><a href="#" onclick="selectEventType('wedding')" style="color: #aaa; text-decoration: none;">Свадьба</a></li>
-            <li><a href="#" onclick="selectEventType('birthday')" style="color: #aaa; text-decoration: none;">День рождения</a></li>
-            <li><a href="#" onclick="selectEventType('genderparty')" style="color: #aaa; text-decoration: none;">Gender Party</a></li>
-            <li><a href="#" onclick="selectEventType('anniversary')" style="color: #aaa; text-decoration: none;">Юбилей</a></li>
+            <li><a href="#" onclick="switchTab('wedding')" style="color: #aaa; text-decoration: none;">Свадьба</a></li>
+            <li><a href="#" onclick="switchTab('birthday')" style="color: #aaa; text-decoration: none;">День рождения</a></li>
+            <li><a href="#" onclick="switchTab('genderparty')" style="color: #aaa; text-decoration: none;">Gender Party</a></li>
+            <li><a href="#" onclick="switchTab('anniversary')" style="color: #aaa; text-decoration: none;">Юбилей</a></li>
           </ul>
         </div>
         <div>
@@ -559,21 +643,40 @@
 
   <script src="/app.js"></script>
   <script>
-    // Данные шаблонов для показа на главной
-    const catalogTemplates = [
-      { id: 'wedding1', name: 'Классическая свадьба', desc: 'Элегантный дизайн для торжества', image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=400', eventType: 'wedding' },
-      { id: 'wedding2', name: 'Романтическая свадьба', desc: 'Нежные тона и цветы', image: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=400', eventType: 'wedding' },
-      { id: 'birthday1', name: 'Детский праздник', desc: 'Яркий и весёлый дизайн', image: 'https://images.unsplash.com/photo-1464349153735-7db50ed83c5c?w=400', eventType: 'birthday' },
-      { id: 'gender1', name: 'Gender Reveal', desc: 'Узнайте пол малыша вместе с гостями', image: 'https://images.unsplash.com/photo-1610962286282-f2c9b3cfbe17?w=400', eventType: 'genderparty' },
-    ];
+    // ДАННЫЕ ШАБЛОНОВ ДЛЯ КАЖДОЙ КАТЕГОРИИ
+    const templatesData = {
+      wedding: [
+        { id: 'wedding1', name: 'Классическая свадьба', desc: 'Элегантный дизайн для торжества', image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=400' },
+        { id: 'wedding2', name: 'Романтическая свадьба', desc: 'Нежные тона и цветы', image: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=400' },
+        { id: 'wedding3', name: 'Богемная свадьба', desc: 'Стиль бохо для неформальной атмосферы', image: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=400' },
+      ],
+      birthday: [
+        { id: 'birthday1', name: 'Детский праздник', desc: 'Яркий и весёлый дизайн', image: 'https://images.unsplash.com/photo-1464349153735-7db50ed83c5c?w=400' },
+        { id: 'birthday2', name: 'Взрослый юбилей', desc: 'Стильное оформление', image: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400' },
+        { id: 'birthday3', name: 'Вечеринка в стиле 80-х', desc: 'Ретро-дизайн', image: 'https://images.unsplash.com/photo-1505236858219-8359eb29e329?w=400' },
+      ],
+      anniversary: [
+        { id: 'anniversary1', name: 'Золотая свадьба', desc: 'Классика для важной даты', image: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=400' },
+        { id: 'anniversary2', name: 'Серебряная свадьба', desc: 'Элегантный дизайн', image: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=400' },
+        { id: 'anniversary3', name: 'Корпоративный юбилей', desc: 'Деловой стиль', image: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=400' },
+      ],
+      genderparty: [
+        { id: 'gender1', name: 'Gender Reveal', desc: 'Узнайте пол малыша', image: 'https://images.unsplash.com/photo-1610962286282-f2c9b3cfbe17?w=400' },
+        { id: 'gender2', name: 'Baby Shower', desc: 'До рождения малыша', image: 'https://images.unsplash.com/photo-1525134479668-1bee5c7c6845?w=400' },
+        { id: 'gender3', name: 'Розовый или голубой', desc: 'Классическое открытие пола', image: 'https://images.unsplash.com/photo-1612404730960-5c71577fca11?w=400' },
+      ],
+    };
 
-    // Загрузка каталога шаблонов
-    function loadCatalog() {
-      const grid = document.getElementById('catalogGrid');
-      if (!grid) return;
+    // Функция отрисовки шаблонов для конкретной категории
+    function renderTemplates(category) {
+      const gridId = `${category}Grid`;
+      const gridContainer = document.getElementById(gridId);
+      if (!gridContainer) return;
+
+      const templates = templatesData[category] || [];
       
-      grid.innerHTML = catalogTemplates.map(tmpl => `
-        <div class="template-card" onclick="selectTemplateFromCatalog('${tmpl.eventType}', '${tmpl.id}')">
+      gridContainer.innerHTML = templates.map(tmpl => `
+        <div class="template-card" onclick="selectTemplateFromCatalog('${category}', '${tmpl.id}')">
           <div class="template-image" style="background-image: url('${tmpl.image}');"></div>
           <div class="template-info">
             <h4>${tmpl.name}</h4>
@@ -583,42 +686,49 @@
       `).join('');
     }
 
-    // Функция для выбора шаблона из каталога
-    async function selectTemplateFromCatalog(eventType, templateId) {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        alert('Пожалуйста, войдите или зарегистрируйтесь');
-        showLoginModal();
-        return;
+    // Переключение табов
+    function switchTab(tabId) {
+      // Обновляем активную кнопку
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('data-tab') === tabId) {
+          btn.classList.add('active');
+        }
+      });
+      
+      // Обновляем активную панель
+      document.querySelectorAll('.tab-pane').forEach(pane => {
+        pane.classList.remove('active');
+      });
+      const activePane = document.getElementById(`tab-${tabId}`);
+      if (activePane) {
+        activePane.classList.add('active');
       }
-
-      try {
-        const invitation = await API.fetch('/invitations', {
-          method: 'POST',
-          body: JSON.stringify({ eventType, templateId }),
-        });
-        location.href = `/editor.html?id=${invitation.id}`;
-      } catch(e) {
-        alert('Ошибка: ' + e.message);
-      }
-    }
-
-    // Скролл к шаблонам
-    function scrollToTemplates() {
+      
+      // Прокручиваем к каталогу
       document.getElementById('templates').scrollIntoView({ behavior: 'smooth' });
     }
 
-    // Навигация на выбор мероприятия
-    function navigateToEventSelection() {
-      location.href = '/index.html';
+    // Скролл к шаблонам и открытие нужного таба
+    function scrollToTemplates(category = 'wedding') {
+      switchTab(category);
     }
 
-    // Функция для выбора типа мероприятия (из футера)
-    function selectEventType(type) {
-      location.href = '/index.html';
+    // Навигация на полный каталог
+    function navigateToFullCatalog() {
+      // Здесь можно сделать переход на отдельную страницу с каталогом
+      alert('Полный каталог из 50+ шаблонов будет доступен в следующем обновлении!');
     }
 
-    // Аккордион для FAQ
+    // Инициализация всех категорий
+    function initTabs() {
+      renderTemplates('wedding');
+      renderTemplates('birthday');
+      renderTemplates('anniversary');
+      renderTemplates('genderparty');
+    }
+
+    // Инициализация аккордеона для FAQ
     function initFaq() {
       const items = document.querySelectorAll('.faq-item');
       items.forEach(item => {
@@ -629,10 +739,18 @@
       });
     }
 
-    // Инициализация при загрузке
+    // Обработчики кнопок табов
     document.addEventListener('DOMContentLoaded', () => {
-      loadCatalog();
+      initTabs();
       initFaq();
+      
+      // Добавляем обработчики на кнопки табов
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tabId = btn.getAttribute('data-tab');
+          switchTab(tabId);
+        });
+      });
       
       // Обновляем кнопки входа если пользователь авторизован
       const token = localStorage.getItem('token');
