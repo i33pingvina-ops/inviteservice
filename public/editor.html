@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Редактор приглашения</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="navbar">
+      <div class="logo">✏️ Редактор приглашения</div>
+      <div>
+        <button onclick="location.href='/dashboard.html'">📋 Мои приглашения</button>
+        <button onclick="location.href='/index.html'">🏠 Главная</button>
+      </div>
+    </div>
+    
+    <div class="editor-container">
+      <div class="editor-panel">
+        <h3>📝 Редактирование</h3>
+        
+        <div class="form-group">
+          <label>🎉 Название события</label>
+          <input type="text" id="eventTitle" placeholder="Например: Свадьба Алексея и Марии">
+        </div>
+        
+        <div class="form-group">
+          <label>📖 Описание</label>
+          <textarea id="eventDescription" rows="4" placeholder="Расскажите детали мероприятия"></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label>📅 Дата и время</label>
+          <input type="datetime-local" id="eventDate">
+        </div>
+        
+        <div class="form-group">
+          <label>📍 Место проведения</label>
+          <input type="text" id="eventLocation" placeholder="Адрес или ссылка на карту">
+        </div>
+        
+        <div class="form-group">
+          <label>❓ Вопросы для гостей (через запятую)</label>
+          <textarea id="customQuestions" rows="3" placeholder="Например: Будете ли вы с детьми?, Есть ли аллергии?, Какую песню заказать?"></textarea>
+        </div>
+        
+        <div style="margin-top: 20px;">
+          <button onclick="saveInvitation()">💾 Сохранить черновик</button>
+          <button onclick="payAndPublish()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">💳 Оплатить и опубликовать (990₽)</button>
+        </div>
+        <p style="margin-top: 15px; font-size: 12px; color: #666;">⚡ Демо-режим: оплата не требуется</p>
+      </div>
+      
+      <div class="preview-panel">
+        <h3>👀 Предпросмотр</h3>
+        <div class="preview-card">
+          <h1 id="previewTitle" style="margin: 20px 0;">Название события</h1>
+          <p id="previewDesc" style="margin: 20px 0;"></p>
+          <p id="previewDate">📅 Дата не указана</p>
+          <p id="previewLocation">📍 Место не указано</p>
+          <div id="previewQuestions" style="margin-top: 20px; text-align: left; background: #f0f0f0; padding: 15px; border-radius: 10px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="/app.js"></script>
+  <script>
+    loadEditor();
+  </script>
+</body>
+</html>

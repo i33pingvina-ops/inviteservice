@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Приглашение</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container" id="inviteContainer">
+    <div style="text-align: center; padding: 50px;">
+      <h2>Загрузка приглашения...</h2>
+    </div>
+  </div>
+  <script>
+    async function loadInvite() {
+      const link = window.location.pathname.split('/').pop();
+      try {
+        const response = await fetch(`/api/invite/${link}`);
+        if (!response.ok) throw new Error('Приглашение не найдено');
+        const inv = await response.json();
+        
+        document.getElementById('inviteContainer').innerHTML = `
+          <div class="invite-container">
+            <div class="invite-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
+              <h1 style="color: white; font-size: 48px;">✨</h1>
+            </div>
+            <div class="invite-body">
+              <h1>${inv.title || 'Вы приглашены!'}</h1>
+              <p style="font-size: 18px; margin: 20px 0;">${inv.description || ''}</p>
+              <p>📅 ${inv.eventDate || 'Дата уточняется'}</p>
+              <p>📍 ${inv.eventLocation || 'Место уточняется'}</p>
+              
+              <div class="rsvp-form">
+                <h3>Пожалуйста, подтвердите присутствие</h3>
+                <form id="responseForm">
+                  <div class="form-group">
+                    <label>Ваше имя *</label>
+                    <input type="text" id="guestName" required>
+                  </div>
+                  <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="guestEmail">
+                  </div>
+                  <div class="form-group">
+                    <label>Вы придёте?</label>
+                    <select id="willAttend">
+                      <option value="true">✅ Да, буду</option>
+                      <option value="false">❌ Нет, не смогу</option>
+                    </select>
+                  </div>
+                  ${inv.customQuestions && inv.customQuestions.length > 0 ? `
+                    <div class="form-group">
+                      <label>${inv.customQuestions.join(', ')}</label>
+                      <input type="text" id="answers" placeholder="Ваши ответы">
+                    </div>
+                  ` : ''}
+                  <button type="submit">Отправить ответ</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        document.getElementById('responseForm').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const response = await fetch(`/api/respond/${link}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              guestName: document.getElementById('guestName').value,
+              guestEmail: document.getElementById('guestEmail').value,
+              willAttend: document.getElementById('willAttend').value === 'true',
+              answers: document.getElementById('answers') ? [document.getElementById('answers').value] : []
+            })
+          });
+          if (response.ok) {
+            alert('Спасибо! Ваш ответ сохранён');
+            location.reload();
+          } else {
+            alert('Ошибка, попробуйте ещё раз');
+          }
+        });
+      } catch(e) {
+        document.getElementById('inviteContainer').innerHTML = `
+          <div style="text-align: center; padding: 50px;">
+            <h2>❌ Приглашение не найдено</h2>
+            <p>Возможно, оно ещё не опубликовано или ссылка неверна</p>
+          </div>
+        `;
+      }
+    }
+    loadInvite();
+  </script>
+</body>
+</html>

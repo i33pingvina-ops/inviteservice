@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мои приглашения</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="navbar">
+      <div class="logo">📋 Мои приглашения</div>
+      <div>
+        <button onclick="location.href='/index.html'">➕ Создать новое</button>
+        <button onclick="location.href='/index.html'">🏠 Главная</button>
+        <button onclick="logout()" class="btn-secondary">🚪 Выйти</button>
+      </div>
+    </div>
+    <div id="content"></div>
+  </div>
+  <script src="/app.js"></script>
+  <script>
+    loadDashboard();
+  </script>
+</body>
+</html>
