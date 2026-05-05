@@ -105,6 +105,55 @@
     .btn-danger {
       background: #dc3545;
     }
+    
+    /* Стили для расписания */
+    .schedule-item {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .schedule-time {
+      width: 120px;
+    }
+    .schedule-title {
+      flex: 1;
+      min-width: 150px;
+    }
+    .schedule-desc {
+      flex: 2;
+      min-width: 200px;
+    }
+    .schedule-item button {
+      background: #dc3545;
+      padding: 8px 15px;
+      margin: 0;
+    }
+    
+    .section-title {
+      font-size: 18px;
+      margin: 20px 0 15px 0;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e0e0e0;
+      color: #333;
+    }
+    
+    .preview-schedule-item {
+      text-align: left;
+      padding: 10px 0;
+      border-bottom: 1px dashed #eee;
+    }
+    .preview-wishes {
+      background: #fef9e6;
+      padding: 15px;
+      border-radius: 15px;
+      margin-top: 20px;
+      text-align: left;
+    }
   </style>
 </head>
 <body>
@@ -147,6 +196,17 @@
           <img id="photoPreview" class="photo-preview" style="display:none;">
         </div>
         
+        <!-- НОВЫЙ БЛОК: РАСПИСАНИЕ ДНЯ -->
+        <div class="section-title">📋 Расписание дня</div>
+        <div id="scheduleList"></div>
+        <button type="button" onclick="addScheduleItem()" style="background: #6c757d;">+ Добавить событие в расписание</button>
+        
+        <!-- НОВЫЙ БЛОК: ПОЖЕЛАНИЯ ПАРЫ -->
+        <div class="section-title">💝 Пожелания пары (или организаторов)</div>
+        <div class="form-group">
+          <textarea id="coupleWishes" rows="4" placeholder="Например: Просим вас быть внимательными к дресс-коду. Будем рады, если вместо цветов вы поддержите наш благотворительный сбор. Детей, пожалуйста, оставляйте дома..."></textarea>
+        </div>
+        
         <h3>📋 Вопросы для гостей</h3>
         <div id="questionsList"></div>
         <button type="button" onclick="addQuestionField()" style="background: #6c757d;">+ Добавить вопрос</button>
@@ -166,14 +226,56 @@
           <p id="previewDesc"></p>
           <p id="previewDate">📅 Дата не указана</p>
           <p id="previewLocation">📍 Место не указано</p>
+          
+          <div id="previewSchedule">
+            <div class="section-title" style="font-size: 16px;">📋 Расписание дня</div>
+            <div id="previewScheduleContent">Нет добавленных событий</div>
+          </div>
+          
+          <div id="previewWishes" class="preview-wishes" style="display:none;">
+            <strong>💝 Пожелания пары:</strong>
+            <p id="previewWishesText"></p>
+          </div>
+          
           <div id="previewQuestions"></div>
         </div>
       </div>
     </div>
   </div>
+  
   <script src="/app.js"></script>
   <script>
     let currentQuestions = [];
+    let currentSchedule = [];
+
+    function addScheduleItem(time = '', title = '', description = '') {
+      currentSchedule.push({ time, title, description });
+      renderScheduleList();
+      updatePreview();
+    }
+
+    function removeScheduleItem(index) {
+      currentSchedule.splice(index, 1);
+      renderScheduleList();
+      updatePreview();
+    }
+
+    function updateScheduleItem(index, field, value) {
+      currentSchedule[index][field] = value;
+      updatePreview();
+    }
+
+    function renderScheduleList() {
+      const container = document.getElementById('scheduleList');
+      container.innerHTML = currentSchedule.map((item, i) => `
+        <div class="schedule-item">
+          <input type="text" class="schedule-time" placeholder="Время (18:00)" value="${escapeHtml(item.time)}" onchange="updateScheduleItem(${i}, 'time', this.value)">
+          <input type="text" class="schedule-title" placeholder="Название (Сбор гостей)" value="${escapeHtml(item.title)}" onchange="updateScheduleItem(${i}, 'title', this.value)">
+          <input type="text" class="schedule-desc" placeholder="Описание" value="${escapeHtml(item.description)}" onchange="updateScheduleItem(${i}, 'description', this.value)">
+          <button onclick="removeScheduleItem(${i})" class="btn-danger">✖</button>
+        </div>
+      `).join('');
+    }
 
     function addQuestionField(questionText = '', type = 'text', options = '') {
       currentQuestions.push({ text: questionText, type: type, options: options });
@@ -198,7 +300,7 @@
             </select>
             ${q.type !== 'text' ? `<input type="text" placeholder="Варианты через запятую" value="${escapeHtml(q.options)}" onchange="updateQuestion(${i}, 'options', this.value)" style="margin-top: 10px;">` : ''}
           </div>
-          <button onclick="removeQuestion(${i})" class="btn-danger" style="background:#dc3545; padding:8px 15px;">✖</button>
+          <button onclick="removeQuestion(${i})" class="btn-danger">✖</button>
         </div>
       `).join('');
     }
@@ -232,6 +334,7 @@
         document.getElementById('eventDescription').value = invitation.description || '';
         document.getElementById('eventDate').value = invitation.eventDate || '';
         document.getElementById('eventLocation').value = invitation.eventLocation || '';
+        document.getElementById('coupleWishes').value = invitation.coupleWishes || '';
         
         if (invitation.backgroundImageUrl) {
           document.getElementById('previewImage').src = invitation.backgroundImageUrl;
@@ -239,7 +342,10 @@
         }
         
         currentQuestions = invitation.customQuestions || [];
+        currentSchedule = invitation.schedule || [];
+        
         renderQuestionsList();
+        renderScheduleList();
         
         updatePreview();
         
@@ -247,6 +353,7 @@
         document.getElementById('eventDescription').addEventListener('input', updatePreview);
         document.getElementById('eventDate').addEventListener('input', updatePreview);
         document.getElementById('eventLocation').addEventListener('input', updatePreview);
+        document.getElementById('coupleWishes').addEventListener('input', updatePreview);
         
         document.getElementById('imageUpload').addEventListener('change', handleImageUpload);
         
@@ -260,17 +367,47 @@
       const desc = document.getElementById('eventDescription').value || '';
       const date = document.getElementById('eventDate').value || 'Дата будет объявлена';
       const location = document.getElementById('eventLocation').value || 'Место проведения';
+      const coupleWishes = document.getElementById('coupleWishes').value || '';
       
       document.getElementById('previewTitle').textContent = title;
       document.getElementById('previewDesc').textContent = desc;
       document.getElementById('previewDate').innerHTML = `📅 ${date}`;
       document.getElementById('previewLocation').innerHTML = `📍 ${location}`;
       
+      // Обновляем расписание в предпросмотре
+      const scheduleContainer = document.getElementById('previewScheduleContent');
+      if (currentSchedule.length > 0) {
+        let scheduleHtml = '<div style="text-align: left;">';
+        currentSchedule.forEach(item => {
+          scheduleHtml += `
+            <div class="preview-schedule-item">
+              <strong>${item.time || 'Время уточняется'}</strong> — ${item.title || ''}
+              ${item.description ? `<br><span style="font-size: 14px; color: #666;">${escapeHtml(item.description)}</span>` : ''}
+            </div>
+          `;
+        });
+        scheduleHtml += '</div>';
+        scheduleContainer.innerHTML = scheduleHtml;
+      } else {
+        scheduleContainer.innerHTML = 'Нет добавленных событий';
+      }
+      
+      // Обновляем пожелания в предпросмотре
+      const wishesDiv = document.getElementById('previewWishes');
+      const wishesText = document.getElementById('previewWishesText');
+      if (coupleWishes.trim()) {
+        wishesText.innerHTML = escapeHtml(coupleWishes);
+        wishesDiv.style.display = 'block';
+      } else {
+        wishesDiv.style.display = 'none';
+      }
+      
+      // Обновляем вопросы в предпросмотре
       const previewQuestionsDiv = document.getElementById('previewQuestions');
       if (currentQuestions.length > 0) {
-        let html = '<h4>📋 Анкета гостя:</h4>';
+        let html = '<div class="section-title" style="font-size: 16px;">📋 Анкета гостя:</div>';
         currentQuestions.forEach(q => {
-          html += `<div style="margin-bottom: 15px;"><strong>${escapeHtml(q.text)}</strong><br>`;
+          html += `<div style="margin-bottom: 15px; text-align: left;"><strong>${escapeHtml(q.text)}</strong><br>`;
           if (q.type === 'text') {
             html += `<input type="text" style="width:100%; padding:8px; margin-top:5px;" placeholder="Ваш ответ">`;
           } else if (q.type === 'select') {
@@ -286,7 +423,7 @@
         });
         previewQuestionsDiv.innerHTML = html;
       } else {
-        previewQuestionsDiv.innerHTML = '<p style="color:#999;">Нет вопросов для гостей</p>';
+        previewQuestionsDiv.innerHTML = '<p style="color:#999; text-align:left;">Нет вопросов для гостей</p>';
       }
     }
 
@@ -320,7 +457,9 @@
         description: document.getElementById('eventDescription').value,
         eventDate: document.getElementById('eventDate').value,
         eventLocation: document.getElementById('eventLocation').value,
+        coupleWishes: document.getElementById('coupleWishes').value,
         customQuestions: currentQuestions,
+        schedule: currentSchedule,
       };
       
       await API.fetch(`/invitations/${window.currentInvitationId}`, {
