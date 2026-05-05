@@ -116,7 +116,7 @@ function logout() {
   location.href = '/index.html';
 }
 
-// ==================== ГЛАВНАЯ СТРАНИЦА (старая версия для совместимости) ====================
+// ==================== ГЛАВНАЯ СТРАНИЦА ====================
 async function renderMainPage() {
   const token = localStorage.getItem('token');
   const navButtons = document.getElementById('navButtons');
@@ -213,17 +213,20 @@ async function loadEditor() {
     const descInput = document.getElementById('eventDescription');
     const dateInput = document.getElementById('eventDate');
     const locationInput = document.getElementById('eventLocation');
-    const questionsInput = document.getElementById('customQuestions');
     
     if (titleInput) titleInput.value = invitation.title || '';
     if (descInput) descInput.value = invitation.description || '';
     if (dateInput) dateInput.value = invitation.eventDate || '';
     if (locationInput) locationInput.value = invitation.eventLocation || '';
-    if (questionsInput) questionsInput.value = (invitation.customQuestions || []).join(', ');
+    
+    if (invitation.backgroundImageUrl && document.getElementById('previewImage')) {
+      document.getElementById('previewImage').src = invitation.backgroundImageUrl;
+      document.getElementById('previewImage').style.display = 'block';
+    }
     
     updatePreview();
     
-    const fields = ['eventTitle', 'eventDescription', 'eventDate', 'eventLocation', 'customQuestions'];
+    const fields = ['eventTitle', 'eventDescription', 'eventDate', 'eventLocation'];
     fields.forEach(field => {
       const el = document.getElementById(field);
       if (el) el.addEventListener('input', updatePreview);
@@ -236,35 +239,19 @@ async function loadEditor() {
 
 function updatePreview() {
   const title = document.getElementById('eventTitle')?.value || 'Название события';
-  const desc = document.getElementById('eventDescription')?.value || 'Описание мероприятия';
+  const desc = document.getElementById('eventDescription')?.value || '';
   const date = document.getElementById('eventDate')?.value || 'Дата будет объявлена';
   const location = document.getElementById('eventLocation')?.value || 'Место проведения';
-  const questions = document.getElementById('customQuestions')?.value || '';
   
   const previewTitle = document.getElementById('previewTitle');
   const previewDesc = document.getElementById('previewDesc');
   const previewDate = document.getElementById('previewDate');
   const previewLocation = document.getElementById('previewLocation');
-  const previewQuestions = document.getElementById('previewQuestions');
   
   if (previewTitle) previewTitle.textContent = title;
   if (previewDesc) previewDesc.textContent = desc;
   if (previewDate) previewDate.innerHTML = `📅 ${date}`;
   if (previewLocation) previewLocation.innerHTML = `📍 ${location}`;
-  
-  if (previewQuestions) {
-    if (questions && questions.trim()) {
-      const qList = questions.split(',').map(q => q.trim()).filter(q => q);
-      if (qList.length > 0) {
-        previewQuestions.innerHTML = '<h4>❓ Вопросы для гостей:</h4><ul>' + qList.map(q => `<li>${q}</li>`).join('') + '</ul>';
-        previewQuestions.style.display = 'block';
-      } else {
-        previewQuestions.style.display = 'none';
-      }
-    } else {
-      previewQuestions.style.display = 'none';
-    }
-  }
 }
 
 async function saveInvitation() {
@@ -273,7 +260,6 @@ async function saveInvitation() {
     description: document.getElementById('eventDescription')?.value || '',
     eventDate: document.getElementById('eventDate')?.value || '',
     eventLocation: document.getElementById('eventLocation')?.value || '',
-    customQuestions: (document.getElementById('customQuestions')?.value || '').split(',').map(q => q.trim()).filter(q => q),
   };
   
   await API.fetch(`/invitations/${currentInvitationId}`, {
@@ -299,91 +285,7 @@ async function payAndPublish() {
   }
 }
 
-// ==================== ДАШБОРД ====================
-async function loadDashboard() {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    location.href = '/index.html';
-    return;
-  }
-  
-  try {
-    const invitationsList = await API.fetch('/user/invitations', { method: 'GET' });
-    const contentDiv = document.getElementById('content');
-    
-    if (!contentDiv) return;
-    
-    if (invitationsList.length === 0) {
-      contentDiv.innerHTML = `
-        <h2>📭 У вас пока нет приглашений</h2>
-        <button onclick="location.href='/index.html'">➕ Создать первое приглашение</button>
-      `;
-      return;
-    }
-    
-    let html = '<h2>📋 Мои приглашения</h2><div class="templates-grid">';
-    invitationsList.forEach(inv => {
-      html += `
-        <div class="card">
-          <div class="card-content">
-            <div class="card-title">${inv.title || 'Без названия'}</div>
-            <p>🎉 ${inv.eventType}</p>
-            <p>Статус: ${inv.isPublished ? '✅ Опубликовано' : '📝 Черновик'}</p>
-            ${inv.isPublished ? `<p>🔗 <a href="/invite/${inv.uniqueLink}" target="_blank">Ссылка для гостей</a></p>` : ''}
-            <button onclick="editInvitation('${inv.id}')">✏️ Редактировать</button>
-            ${inv.isPublished ? `<button onclick="viewResponses('${inv.id}')" class="btn-secondary">📊 Ответы гостей</button>` : ''}
-          </div>
-        </div>
-      `;
-    });
-    html += '</div>';
-    contentDiv.innerHTML = html;
-  } catch(e) {
-    alert('Ошибка загрузки: ' + e.message);
-  }
-}
-
-function editInvitation(id) {
-  location.href = `/editor.html?id=${id}`;
-}
-
-async function viewResponses(invitationId) {
-  const contentDiv = document.getElementById('content');
-  if (!contentDiv) return;
-  
-  try {
-    const responses = await API.fetch(`/responses/${invitationId}`, { method: 'GET' });
-    
-    if (responses.length === 0) {
-      contentDiv.innerHTML = `
-        <h2>📊 Ответы гостей</h2>
-        <p>Пока никто не ответил на приглашение</p>
-        <button onclick="loadDashboard()" class="btn-secondary">← Назад</button>
-      `;
-      return;
-    }
-    
-    let html = '<h2>📊 Ответы гостей</h2><div class="templates-grid">';
-    responses.forEach(r => {
-      html += `
-        <div class="card">
-          <div class="card-content">
-            <p><strong>👤 ${r.guestName}</strong> (${r.guestEmail || 'email не указан'})</p>
-            <p>${r.willAttend ? '✅ Придёт' : '❌ Не придёт'}</p>
-            ${r.answers && r.answers.length ? `<p>📝 Ответы: ${r.answers.join(', ')}</p>` : ''}
-            <small>📅 ${new Date(r.submittedAt).toLocaleString()}</small>
-          </div>
-        </div>
-      `;
-    });
-    html += '<button onclick="loadDashboard()" class="btn-secondary">← Назад</button>';
-    contentDiv.innerHTML = html;
-  } catch(e) {
-    alert('Ошибка загрузки ответов: ' + e.message);
-  }
-}
-
-// ==================== НОВЫЕ ФУНКЦИИ ДЛЯ ГЛАВНОЙ СТРАНИЦЫ С ТАБАМИ ====================
+// ==================== НОВЫЕ ФУНКЦИИ ДЛЯ ГЛАВНОЙ СТРАНИЦЫ ====================
 async function selectTemplateFromCatalog(eventType, templateId) {
   const token = localStorage.getItem('token');
   if (!token) {
@@ -419,7 +321,6 @@ function navigateToFullCatalog() {
 }
 
 function switchTab(tabId) {
-  // Обновляем активную кнопку
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.remove('active');
     if (btn.getAttribute('data-tab') === tabId) {
@@ -427,7 +328,6 @@ function switchTab(tabId) {
     }
   });
   
-  // Обновляем активную панель
   document.querySelectorAll('.tab-pane').forEach(pane => {
     pane.classList.remove('active');
   });
@@ -436,10 +336,97 @@ function switchTab(tabId) {
     activePane.classList.add('active');
   }
   
-  // Прокручиваем к каталогу
   const templatesSection = document.getElementById('templates');
   if (templatesSection) {
     templatesSection.scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+// ==================== КАРУСЕЛЬ ОТЗЫВОВ ====================
+let currentReviewIndex = 0;
+let totalReviews = 0;
+
+function initCarousel() {
+  const track = document.getElementById('reviewsTrack');
+  if (!track) return;
+  
+  const cards = track.querySelectorAll('.review-card');
+  totalReviews = cards.length;
+  const cardsPerView = window.innerWidth > 1000 ? 3 : (window.innerWidth > 768 ? 2 : 1);
+  const maxIndex = Math.max(0, totalReviews - cardsPerView);
+  
+  const dotsContainer = document.getElementById('carouselDots');
+  if (dotsContainer) {
+    dotsContainer.innerHTML = '';
+    for (let i = 0; i <= maxIndex; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'dot' + (i === currentReviewIndex ? ' active' : '');
+      dot.onclick = () => goToReview(i);
+      dotsContainer.appendChild(dot);
+    }
+  }
+}
+
+function updateCarousel() {
+  const track = document.getElementById('reviewsTrack');
+  if (!track) return;
+  
+  const cards = track.querySelectorAll('.review-card');
+  const cardsPerView = window.innerWidth > 1000 ? 3 : (window.innerWidth > 768 ? 2 : 1);
+  const cardWidth = cards[0]?.offsetWidth + 30 || 350;
+  
+  track.style.transform = `translateX(-${currentReviewIndex * cardWidth}px)`;
+  
+  const dots = document.querySelectorAll('.dot');
+  dots.forEach((dot, i) => {
+    dot.classList.toggle('active', i === currentReviewIndex);
+  });
+}
+
+function nextReview() {
+  const track = document.getElementById('reviewsTrack');
+  if (!track) return;
+  
+  const cards = track.querySelectorAll('.review-card');
+  const cardsPerView = window.innerWidth > 1000 ? 3 : (window.innerWidth > 768 ? 2 : 1);
+  const maxIndex = Math.max(0, cards.length - cardsPerView);
+  
+  if (currentReviewIndex < maxIndex) {
+    currentReviewIndex++;
+    updateCarousel();
+  }
+}
+
+function prevReview() {
+  if (currentReviewIndex > 0) {
+    currentReviewIndex--;
+    updateCarousel();
+  }
+}
+
+function goToReview(index) {
+  currentReviewIndex = index;
+  updateCarousel();
+}
+
+// ==================== УДАЛЕНИЕ ПРИГЛАШЕНИЯ ====================
+async function deleteInvitation(invitationId) {
+  if (!confirm('Вы уверены, что хотите удалить это приглашение? Это действие нельзя отменить.')) {
+    return;
+  }
+  
+  try {
+    await API.fetch(`/invitations/${invitationId}`, {
+      method: 'DELETE',
+    });
+    alert('Приглашение удалено');
+    if (typeof loadDashboard === 'function') {
+      loadDashboard();
+    } else {
+      location.reload();
+    }
+  } catch(e) {
+    alert('Ошибка при удалении: ' + e.message);
   }
 }
 
@@ -452,17 +439,27 @@ window.selectEvent = selectEvent;
 window.selectTemplate = selectTemplate;
 window.saveInvitation = saveInvitation;
 window.payAndPublish = payAndPublish;
-window.editInvitation = editInvitation;
-window.viewResponses = viewResponses;
 window.renderMainPage = renderMainPage;
 window.loadEditor = loadEditor;
-window.loadDashboard = loadDashboard;
 window.showLoginModal = showLoginModal;
 window.updatePreview = updatePreview;
 
-// Новые функции для главной страницы с табами
 window.selectTemplateFromCatalog = selectTemplateFromCatalog;
 window.scrollToTemplates = scrollToTemplates;
 window.navigateToEventSelection = navigateToEventSelection;
 window.navigateToFullCatalog = navigateToFullCatalog;
 window.switchTab = switchTab;
+
+window.prevReview = prevReview;
+window.nextReview = nextReview;
+window.goToReview = goToReview;
+window.initCarousel = initCarousel;
+window.deleteInvitation = deleteInvitation;
+
+window.addEventListener('resize', () => {
+  if (document.getElementById('reviewsTrack')) {
+    currentReviewIndex = 0;
+    initCarousel();
+    updateCarousel();
+  }
+});
