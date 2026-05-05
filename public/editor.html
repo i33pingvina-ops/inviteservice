@@ -5,6 +5,107 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Редактор приглашения</title>
   <link rel="stylesheet" href="/style.css">
+  <style>
+    .editor-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .editor-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .editor-panel, .preview-panel {
+      background: #f7f7f7;
+      padding: 20px;
+      border-radius: 15px;
+    }
+
+    .preview-panel {
+      position: sticky;
+      top: 20px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .preview-card {
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+
+    .preview-image {
+      width: 100%;
+      height: 300px;
+      object-fit: cover;
+      border-radius: 15px;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 5px;
+    }
+
+    .question-item {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .photo-preview {
+      max-width: 200px;
+      margin-top: 10px;
+      border-radius: 10px;
+    }
+
+    .btn-danger {
+      background: #dc3545;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -18,7 +119,7 @@
     
     <div class="editor-container">
       <div class="editor-panel">
-        <h3>📝 Редактирование</h3>
+        <h3>📝 Основная информация</h3>
         
         <div class="form-group">
           <label>🎉 Название события</label>
@@ -27,7 +128,7 @@
         
         <div class="form-group">
           <label>📖 Описание</label>
-          <textarea id="eventDescription" rows="4" placeholder="Расскажите детали мероприятия"></textarea>
+          <textarea id="eventDescription" rows="3" placeholder="Расскажите детали мероприятия"></textarea>
         </div>
         
         <div class="form-group">
@@ -41,9 +142,14 @@
         </div>
         
         <div class="form-group">
-          <label>❓ Вопросы для гостей (через запятую)</label>
-          <textarea id="customQuestions" rows="3" placeholder="Например: Будете ли вы с детьми?, Есть ли аллергии?, Какую песню заказать?"></textarea>
+          <label>🖼️ Фоновое изображение</label>
+          <input type="file" id="imageUpload" accept="image/*">
+          <img id="photoPreview" class="photo-preview" style="display:none;">
         </div>
+        
+        <h3>📋 Вопросы для гостей</h3>
+        <div id="questionsList"></div>
+        <button type="button" onclick="addQuestionField()" style="background: #6c757d;">+ Добавить вопрос</button>
         
         <div style="margin-top: 20px;">
           <button onclick="saveInvitation()">💾 Сохранить черновик</button>
@@ -54,18 +160,192 @@
       
       <div class="preview-panel">
         <h3>👀 Предпросмотр</h3>
-        <div class="preview-card">
-          <h1 id="previewTitle" style="margin: 20px 0;">Название события</h1>
-          <p id="previewDesc" style="margin: 20px 0;"></p>
+        <div class="preview-card" id="previewCard">
+          <img id="previewImage" class="preview-image" src="" style="display:none;">
+          <h1 id="previewTitle">Название события</h1>
+          <p id="previewDesc"></p>
           <p id="previewDate">📅 Дата не указана</p>
           <p id="previewLocation">📍 Место не указано</p>
-          <div id="previewQuestions" style="margin-top: 20px; text-align: left; background: #f0f0f0; padding: 15px; border-radius: 10px;"></div>
+          <div id="previewQuestions"></div>
         </div>
       </div>
     </div>
   </div>
   <script src="/app.js"></script>
   <script>
+    let currentQuestions = [];
+
+    function addQuestionField(questionText = '', type = 'text', options = '') {
+      currentQuestions.push({ text: questionText, type: type, options: options });
+      renderQuestionsList();
+    }
+
+    function removeQuestion(index) {
+      currentQuestions.splice(index, 1);
+      renderQuestionsList();
+    }
+
+    function renderQuestionsList() {
+      const container = document.getElementById('questionsList');
+      container.innerHTML = currentQuestions.map((q, i) => `
+        <div class="question-item">
+          <div style="flex:1">
+            <input type="text" placeholder="Текст вопроса" value="${escapeHtml(q.text)}" onchange="updateQuestion(${i}, 'text', this.value)" style="margin-bottom: 10px;">
+            <select onchange="updateQuestion(${i}, 'type', this.value)">
+              <option value="text" ${q.type === 'text' ? 'selected' : ''}>Текстовый ответ</option>
+              <option value="select" ${q.type === 'select' ? 'selected' : ''}>Выбор из вариантов</option>
+              <option value="radio" ${q.type === 'radio' ? 'selected' : ''}>Один вариант</option>
+            </select>
+            ${q.type !== 'text' ? `<input type="text" placeholder="Варианты через запятую" value="${escapeHtml(q.options)}" onchange="updateQuestion(${i}, 'options', this.value)" style="margin-top: 10px;">` : ''}
+          </div>
+          <button onclick="removeQuestion(${i})" class="btn-danger" style="background:#dc3545; padding:8px 15px;">✖</button>
+        </div>
+      `).join('');
+    }
+
+    function updateQuestion(index, field, value) {
+      currentQuestions[index][field] = value;
+      updatePreview();
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+      });
+    }
+
+    async function loadEditor() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const id = urlParams.get('id');
+      if (!id) return;
+      
+      window.currentInvitationId = id;
+      
+      try {
+        const invitation = await API.fetch(`/invitations/${id}`, { method: 'GET' });
+        
+        document.getElementById('eventTitle').value = invitation.title || '';
+        document.getElementById('eventDescription').value = invitation.description || '';
+        document.getElementById('eventDate').value = invitation.eventDate || '';
+        document.getElementById('eventLocation').value = invitation.eventLocation || '';
+        
+        if (invitation.backgroundImageUrl) {
+          document.getElementById('previewImage').src = invitation.backgroundImageUrl;
+          document.getElementById('previewImage').style.display = 'block';
+        }
+        
+        currentQuestions = invitation.customQuestions || [];
+        renderQuestionsList();
+        
+        updatePreview();
+        
+        document.getElementById('eventTitle').addEventListener('input', updatePreview);
+        document.getElementById('eventDescription').addEventListener('input', updatePreview);
+        document.getElementById('eventDate').addEventListener('input', updatePreview);
+        document.getElementById('eventLocation').addEventListener('input', updatePreview);
+        
+        document.getElementById('imageUpload').addEventListener('change', handleImageUpload);
+        
+      } catch(e) {
+        alert('Ошибка загрузки: ' + e.message);
+      }
+    }
+
+    function updatePreview() {
+      const title = document.getElementById('eventTitle').value || 'Название события';
+      const desc = document.getElementById('eventDescription').value || '';
+      const date = document.getElementById('eventDate').value || 'Дата будет объявлена';
+      const location = document.getElementById('eventLocation').value || 'Место проведения';
+      
+      document.getElementById('previewTitle').textContent = title;
+      document.getElementById('previewDesc').textContent = desc;
+      document.getElementById('previewDate').innerHTML = `📅 ${date}`;
+      document.getElementById('previewLocation').innerHTML = `📍 ${location}`;
+      
+      const previewQuestionsDiv = document.getElementById('previewQuestions');
+      if (currentQuestions.length > 0) {
+        let html = '<h4>📋 Анкета гостя:</h4>';
+        currentQuestions.forEach(q => {
+          html += `<div style="margin-bottom: 15px;"><strong>${escapeHtml(q.text)}</strong><br>`;
+          if (q.type === 'text') {
+            html += `<input type="text" style="width:100%; padding:8px; margin-top:5px;" placeholder="Ваш ответ">`;
+          } else if (q.type === 'select') {
+            const options = (q.options || '').split(',').map(opt => opt.trim());
+            html += `<select style="width:100%; padding:8px; margin-top:5px;">`;
+            options.forEach(opt => html += `<option>${escapeHtml(opt)}</option>`);
+            html += `</select>`;
+          } else if (q.type === 'radio') {
+            const options = (q.options || '').split(',').map(opt => opt.trim());
+            options.forEach(opt => html += `<label style="display:block;"><input type="radio" name="q_${q.text}"> ${escapeHtml(opt)}</label>`);
+          }
+          html += `</div>`;
+        });
+        previewQuestionsDiv.innerHTML = html;
+      } else {
+        previewQuestionsDiv.innerHTML = '<p style="color:#999;">Нет вопросов для гостей</p>';
+      }
+    }
+
+    async function handleImageUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+      const data = await response.json();
+      
+      document.getElementById('previewImage').src = data.url;
+      document.getElementById('previewImage').style.display = 'block';
+      
+      await API.fetch(`/invitations/${window.currentInvitationId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ backgroundImageUrl: data.url })
+      });
+    }
+
+    async function saveInvitation() {
+      const data = {
+        title: document.getElementById('eventTitle').value,
+        description: document.getElementById('eventDescription').value,
+        eventDate: document.getElementById('eventDate').value,
+        eventLocation: document.getElementById('eventLocation').value,
+        customQuestions: currentQuestions,
+      };
+      
+      await API.fetch(`/invitations/${window.currentInvitationId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
+      
+      alert('✅ Сохранено!');
+    }
+
+    async function payAndPublish() {
+      try {
+        await API.fetch('/create-payment', {
+          method: 'POST',
+          body: JSON.stringify({ invitationId: window.currentInvitationId })
+        });
+        
+        await API.fetch(`/publish/${window.currentInvitationId}`, { method: 'POST' });
+        alert('🎉 Приглашение опубликовано!');
+        location.href = '/dashboard.html';
+      } catch(e) {
+        alert('Ошибка: ' + e.message);
+      }
+    }
+
     loadEditor();
   </script>
 </body>
