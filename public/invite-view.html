@@ -5,6 +5,66 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Приглашение</title>
   <link rel="stylesheet" href="/style.css">
+  <style>
+    .invite-container {
+      max-width: 800px;
+      margin: 40px auto;
+      background: white;
+      border-radius: 30px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .invite-header {
+      min-height: 200px;
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .invite-body {
+      padding: 40px;
+      text-align: center;
+    }
+    .invite-body h1 {
+      font-size: 36px;
+      margin-bottom: 20px;
+      color: #333;
+    }
+    .rsvp-form {
+      background: #f7f7f7;
+      padding: 30px;
+      border-radius: 20px;
+      margin-top: 30px;
+      text-align: left;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      width: 100%;
+    }
+  </style>
 </head>
 <body>
   <div class="container" id="inviteContainer">
@@ -20,16 +80,39 @@
         if (!response.ok) throw new Error('Приглашение не найдено');
         const inv = await response.json();
         
+        let questionsHtml = '';
+        if (inv.customQuestions && inv.customQuestions.length > 0) {
+          questionsHtml = '<h3>📋 Пожалуйста, ответьте на вопросы:</h3>';
+          inv.customQuestions.forEach((q, idx) => {
+            questionsHtml += `<div class="form-group"><label>${escapeHtml(q.text)}</label>`;
+            if (q.type === 'text') {
+              questionsHtml += `<input type="text" id="q_${idx}" class="question-input" data-index="${idx}">`;
+            } else if (q.type === 'select') {
+              const options = (q.options || '').split(',').map(opt => opt.trim());
+              questionsHtml += `<select id="q_${idx}" class="question-input" data-index="${idx}">`;
+              options.forEach(opt => questionsHtml += `<option>${escapeHtml(opt)}</option>`);
+              questionsHtml += `</select>`;
+            } else if (q.type === 'radio') {
+              const options = (q.options || '').split(',').map(opt => opt.trim());
+              options.forEach((opt, optIdx) => {
+                questionsHtml += `<label style="display:block;"><input type="radio" name="q_${idx}" value="${escapeHtml(opt)}"> ${escapeHtml(opt)}</label>`;
+              });
+            }
+            questionsHtml += `</div>`;
+          });
+        }
+        
         document.getElementById('inviteContainer').innerHTML = `
           <div class="invite-container">
-            <div class="invite-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
+            <div class="invite-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
               <h1 style="color: white; font-size: 48px;">✨</h1>
             </div>
             <div class="invite-body">
-              <h1>${inv.title || 'Вы приглашены!'}</h1>
-              <p style="font-size: 18px; margin: 20px 0;">${inv.description || ''}</p>
+              <h1>${escapeHtml(inv.title) || 'Вы приглашены!'}</h1>
+              <p style="font-size: 18px; margin: 20px 0;">${escapeHtml(inv.description) || ''}</p>
               <p>📅 ${inv.eventDate || 'Дата уточняется'}</p>
               <p>📍 ${inv.eventLocation || 'Место уточняется'}</p>
+              ${inv.backgroundImageUrl ? `<img src="${inv.backgroundImageUrl}" style="width:100%; border-radius:15px; margin:20px 0;">` : ''}
               
               <div class="rsvp-form">
                 <h3>Пожалуйста, подтвердите присутствие</h3>
@@ -49,12 +132,7 @@
                       <option value="false">❌ Нет, не смогу</option>
                     </select>
                   </div>
-                  ${inv.customQuestions && inv.customQuestions.length > 0 ? `
-                    <div class="form-group">
-                      <label>${inv.customQuestions.join(', ')}</label>
-                      <input type="text" id="answers" placeholder="Ваши ответы">
-                    </div>
-                  ` : ''}
+                  ${questionsHtml}
                   <button type="submit">Отправить ответ</button>
                 </form>
               </div>
@@ -64,6 +142,18 @@
         
         document.getElementById('responseForm').addEventListener('submit', async (e) => {
           e.preventDefault();
+          
+          const answers = [];
+          const questionInputs = document.querySelectorAll('.question-input');
+          questionInputs.forEach(input => {
+            if (input.type === 'radio') {
+              const checked = document.querySelector(`input[name="${input.name}"]:checked`);
+              answers.push(checked ? checked.value : '');
+            } else {
+              answers.push(input.value);
+            }
+          });
+          
           const response = await fetch(`/api/respond/${link}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -71,7 +161,7 @@
               guestName: document.getElementById('guestName').value,
               guestEmail: document.getElementById('guestEmail').value,
               willAttend: document.getElementById('willAttend').value === 'true',
-              answers: document.getElementById('answers') ? [document.getElementById('answers').value] : []
+              answers: answers
             })
           });
           if (response.ok) {
@@ -90,6 +180,17 @@
         `;
       }
     }
+    
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+      });
+    }
+    
     loadInvite();
   </script>
 </body>
