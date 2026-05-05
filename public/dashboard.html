@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Мои приглашения</title>
   <link rel="stylesheet" href="/style.css">
+  <style>
+    .btn-danger {
+      background: #dc3545;
+    }
+    .btn-danger:hover {
+      background: #c82333;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -20,6 +28,90 @@
   </div>
   <script src="/app.js"></script>
   <script>
+    async function loadDashboard() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        location.href = '/index.html';
+        return;
+      }
+      
+      try {
+        const invitationsList = await API.fetch('/user/invitations', { method: 'GET' });
+        const contentDiv = document.getElementById('content');
+        
+        if (!contentDiv) return;
+        
+        if (invitationsList.length === 0) {
+          contentDiv.innerHTML = `
+            <h2>📭 У вас пока нет приглашений</h2>
+            <button onclick="location.href='/index.html'">➕ Создать первое приглашение</button>
+          `;
+          return;
+        }
+        
+        let html = '<h2>📋 Мои приглашения</h2><div class="templates-grid">';
+        invitationsList.forEach(inv => {
+          html += `
+            <div class="card">
+              <div class="card-content">
+                <div class="card-title">${inv.title || 'Без названия'}</div>
+                <p>🎉 ${inv.eventType}</p>
+                <p>Статус: ${inv.isPublished ? '✅ Опубликовано' : '📝 Черновик'}</p>
+                ${inv.isPublished ? `<p>🔗 <a href="/invite/${inv.uniqueLink}" target="_blank">Ссылка для гостей</a></p>` : ''}
+                <button onclick="editInvitation('${inv.id}')">✏️ Редактировать</button>
+                ${inv.isPublished ? `<button onclick="viewResponses('${inv.id}')" class="btn-secondary">📊 Ответы гостей</button>` : ''}
+                <button onclick="deleteInvitation('${inv.id}')" class="btn-danger">🗑 Удалить</button>
+              </div>
+            </div>
+          `;
+        });
+        html += '</div>';
+        contentDiv.innerHTML = html;
+      } catch(e) {
+        alert('Ошибка загрузки: ' + e.message);
+      }
+    }
+
+    function editInvitation(id) {
+      location.href = `/editor.html?id=${id}`;
+    }
+
+    async function viewResponses(invitationId) {
+      const contentDiv = document.getElementById('content');
+      if (!contentDiv) return;
+      
+      try {
+        const responses = await API.fetch(`/responses/${invitationId}`, { method: 'GET' });
+        
+        if (responses.length === 0) {
+          contentDiv.innerHTML = `
+            <h2>📊 Ответы гостей</h2>
+            <p>Пока никто не ответил на приглашение</p>
+            <button onclick="loadDashboard()" class="btn-secondary">← Назад</button>
+          `;
+          return;
+        }
+        
+        let html = '<h2>📊 Ответы гостей</h2><div class="templates-grid">';
+        responses.forEach(r => {
+          html += `
+            <div class="card">
+              <div class="card-content">
+                <p><strong>👤 ${r.guestName}</strong> (${r.guestEmail || 'email не указан'})</p>
+                <p>${r.willAttend ? '✅ Придёт' : '❌ Не придёт'}</p>
+                ${r.answers && r.answers.length ? `<p>📝 Ответы: ${r.answers.join(', ')}</p>` : ''}
+                <small>📅 ${new Date(r.submittedAt).toLocaleString()}</small>
+              </div>
+            </div>
+          `;
+        });
+        html += '<button onclick="loadDashboard()" class="btn-secondary">← Назад</button>';
+        contentDiv.innerHTML = html;
+      } catch(e) {
+        alert('Ошибка загрузки ответов: ' + e.message);
+      }
+    }
+
     loadDashboard();
   </script>
 </body>
