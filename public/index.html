@@ -1,22 +1,649 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>InviteService - Создайте идеальное приглашение</title>
+  <title>InviteService | Создайте идеальное приглашение</title>
   <link rel="stylesheet" href="/style.css">
+  <style>
+    /* Дополнительные стили только для главной страницы */
+    .hero {
+      min-height: 90vh;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.92) 0%, rgba(118, 75, 162, 0.92) 100%), url('https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=1600');
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: white;
+      border-radius: 0 0 50px 50px;
+      margin-top: -20px;
+    }
+
+    .hero-content {
+      max-width: 800px;
+      padding: 120px 20px;
+    }
+
+    .hero h1 {
+      font-size: 56px;
+      margin-bottom: 20px;
+      animation: fadeInUp 0.8s ease;
+    }
+
+    .hero p {
+      font-size: 20px;
+      margin-bottom: 40px;
+      opacity: 0.95;
+      animation: fadeInUp 0.8s ease 0.1s both;
+    }
+
+    .hero .btn-large {
+      padding: 16px 48px;
+      font-size: 18px;
+      background: white;
+      color: #667eea;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      animation: fadeInUp 0.8s ease 0.2s both;
+    }
+
+    .hero .btn-large:hover {
+      transform: scale(1.05);
+      background: #f8f9fa;
+    }
+
+    .section {
+      padding: 80px 20px;
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: 36px;
+      margin-bottom: 50px;
+      color: #333;
+    }
+
+    .section-title span {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .advantages-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .advantage-card {
+      text-align: center;
+      padding: 30px;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      transition: all 0.3s;
+    }
+
+    .advantage-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+
+    .advantage-icon {
+      font-size: 50px;
+      margin-bottom: 20px;
+    }
+
+    .advantage-card h3 {
+      font-size: 22px;
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    .advantage-card p {
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 30px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .step {
+      text-align: center;
+      position: relative;
+    }
+
+    .step-number {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: bold;
+      margin: 0 auto 20px;
+    }
+
+    .step h4 {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+
+    .step p {
+      color: #666;
+    }
+
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 30px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .template-card {
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .template-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+
+    .template-image {
+      height: 250px;
+      background-size: cover;
+      background-position: center;
+    }
+
+    .template-info {
+      padding: 20px;
+    }
+
+    .template-info h4 {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .template-info p {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .reviews-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .review-card {
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .review-text {
+      font-style: italic;
+      color: #555;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .review-author {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .review-avatar {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    .review-name {
+      font-weight: bold;
+      color: #333;
+    }
+
+    .review-role {
+      font-size: 12px;
+      color: #999;
+    }
+
+    .faq-accordion {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .faq-item {
+      background: white;
+      margin-bottom: 15px;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .faq-question {
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      font-weight: 600;
+      color: #333;
+      transition: background 0.3s;
+    }
+
+    .faq-question:hover {
+      background: #f7f7f7;
+    }
+
+    .faq-answer {
+      max-height: 0;
+      padding: 0 20px;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .faq-item.active .faq-answer {
+      max-height: 300px;
+      padding: 0 20px 20px;
+    }
+
+    .faq-icon {
+      font-size: 24px;
+      transition: transform 0.3s;
+    }
+
+    .faq-item.active .faq-icon {
+      transform: rotate(45deg);
+    }
+
+    .cta {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-align: center;
+      border-radius: 30px;
+      margin: 40px auto;
+      max-width: 1000px;
+    }
+
+    .cta-content {
+      padding: 60px 40px;
+    }
+
+    .cta h3 {
+      font-size: 32px;
+      margin-bottom: 20px;
+    }
+
+    .cta .btn-white {
+      background: white;
+      color: #667eea;
+      padding: 14px 40px;
+      font-size: 18px;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 36px; }
+      .hero p { font-size: 16px; }
+      .section-title { font-size: 28px; }
+      .section { padding: 50px 20px; }
+    }
+  </style>
 </head>
 <body>
+
+  <!-- ШАПКА -->
   <div class="container">
     <div class="navbar">
       <div class="logo">✨ InviteService</div>
-      <div id="navButtons"></div>
+      <div id="navButtons">
+        <button onclick="showLoginModal()">Войти</button>
+      </div>
     </div>
-    <div id="content"></div>
   </div>
+
+  <!-- ГЛАВНЫЙ ЭКРАН (HERO) -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1>Создайте идеальное приглашение за 5 минут</h1>
+      <p>Свадьбы, дни рождения, юбилеи, гендер-пати — выбирайте шаблон, настраивайте и отправляйте гостям. Всё онлайн.</p>
+      <button class="btn-large" onclick="scrollToTemplates()">🎨 Выбрать шаблон</button>
+    </div>
+  </section>
+
+  <!-- НАШИ ПРЕИМУЩЕСТВА -->
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title">Почему выбирают <span>InviteService</span>?</h2>
+      <div class="advantages-grid">
+        <div class="advantage-card">
+          <div class="advantage-icon">🎨</div>
+          <h3>50+ уникальных шаблонов</h3>
+          <p>На любой вкус и мероприятие — от классики до современных дизайнов</p>
+        </div>
+        <div class="advantage-card">
+          <div class="advantage-icon">⚡</div>
+          <h3>Легкий редактор</h3>
+          <p>Меняйте текст, фото, цвета — никаких навыков дизайна не нужно</p>
+        </div>
+        <div class="advantage-card">
+          <div class="advantage-icon">📊</div>
+          <h3>Сбор ответов</h3>
+          <p>Гости подтверждают присутствие, вы видите статистику в реальном времени</p>
+        </div>
+        <div class="advantage-card">
+          <div class="advantage-icon">🔗</div>
+          <h3>Умные ссылки</h3>
+          <p>Уникальная ссылка для каждого приглашения — отправляйте в мессенджеры</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- КАК ЭТО РАБОТАЕТ -->
+  <section class="section" style="background: #f8f9fa;">
+    <div class="container">
+      <h2 class="section-title">Как это <span>работает</span>?</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h4>Выберите шаблон</h4>
+          <p>Просмотрите каталог и выберите дизайн, который вам нравится</p>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <h4>Настройте под себя</h4>
+          <p>Добавьте дату, место, фото, вопросы для гостей</p>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <h4>Оплатите и опубликуйте</h4>
+          <p>Всего 990₽ — и приглашение готово к отправке</p>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <h4>Собирайте ответы</h4>
+          <p>Гости заполняют анкету, вы получаете все данные</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- КАТАЛОГ ШАБЛОНОВ -->
+  <section class="section" id="templates">
+    <div class="container">
+      <h2 class="section-title">Популярные <span>шаблоны</span></h2>
+      <div class="catalog-grid" id="catalogGrid">
+        <!-- Шаблоны загрузятся через JavaScript -->
+      </div>
+      <div style="text-align: center; margin-top: 40px;">
+        <button class="btn-secondary" onclick="location.href='/index.html'">Смотреть все 50+ шаблонов →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ОТЗЫВЫ -->
+  <section class="section" style="background: #f8f9fa;">
+    <div class="container">
+      <h2 class="section-title">Что говорят <span>наши клиенты</span>?</h2>
+      <div class="reviews-grid">
+        <div class="review-card">
+          <div class="review-text">"Сделали приглашение на свадьбу за 10 минут! Гости в восторге, а мы сэкономили кучу времени на рассылке."</div>
+          <div class="review-author">
+            <div class="review-avatar">А</div>
+            <div>
+              <div class="review-name">Анна и Дмитрий</div>
+              <div class="review-role">Свадьба, июнь 2024</div>
+            </div>
+          </div>
+        </div>
+        <div class="review-card">
+          <div class="review-text">"Отличный сервис для дня рождения ребёнка. Гости быстро регистрировались, было понятно, кто придёт, а кто нет."</div>
+          <div class="review-author">
+            <div class="review-avatar">Е</div>
+            <div>
+              <div class="review-name">Екатерина</div>
+              <div class="review-role">День рождения, сентябрь 2024</div>
+            </div>
+          </div>
+        </div>
+        <div class="review-card">
+          <div class="review-text">"Удобно что можно настроить анкету под себя. Для гендер-пати мы добавили вопрос про цвет торта — получилось весело!"</div>
+          <div class="review-author">
+            <div class="review-avatar">М</div>
+            <div>
+              <div class="review-name">Мария</div>
+              <div class="review-role">Gender Party, март 2024</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ВОПРОСЫ-ОТВЕТЫ (АККОРДИОН) -->
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title">Часто задаваемые <span>вопросы</span></h2>
+      <div class="faq-accordion">
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>Сколько стоит создание приглашения?</span>
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer">Создание черновика и редактирование — бесплатно. Публикация готового приглашения стоит 990₽ — это разовый платёж, без скрытых комиссий.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>Гости могут загружать свои фото?</span>
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer">Да, вы можете настроить анкету так, чтобы гости загружали свои фото или файлы — например, для сбора совместных поздравлений.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>Как долго работает приглашение?</span>
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer">Приглашение доступно без ограничения по времени. Вы можете закрыть сбор ответов в любой момент или оставить страницу навсегда.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>Можно ли потом изменить приглашение после публикации?</span>
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer">Да! Вы можете редактировать текст, добавлять фото и даже менять шаблон после публикации. Ссылка для гостей останется той же.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>Какие способы оплаты принимаете?</span>
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer">Мы принимаем банковские карты (Visa, Mastercard), Apple Pay, Google Pay и SBP (Система быстрых платежей).</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ПРИЗЫВ К ДЕЙСТВИЮ (CTA) -->
+  <div class="container">
+    <div class="cta">
+      <div class="cta-content">
+        <h3>Готовы создать идеальное приглашение?</h3>
+        <p>Начните прямо сейчас — это бесплатно!</p>
+        <button class="btn-white" onclick="navigateToEventSelection()">🎨 Создать приглашение</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ПОДВАЛ -->
+  <footer style="background: #1a1a2e; color: white; padding: 40px 20px; margin-top: 60px;">
+    <div class="container">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px;">
+        <div>
+          <div style="font-size: 24px; font-weight: bold; margin-bottom: 15px;">✨ InviteService</div>
+          <p style="color: #aaa;">Создавайте красивые приглашения онлайн за 5 минут</p>
+        </div>
+        <div>
+          <h4>Мероприятия</h4>
+          <ul style="list-style: none; margin-top: 10px;">
+            <li><a href="#" onclick="selectEventType('wedding')" style="color: #aaa; text-decoration: none;">Свадьба</a></li>
+            <li><a href="#" onclick="selectEventType('birthday')" style="color: #aaa; text-decoration: none;">День рождения</a></li>
+            <li><a href="#" onclick="selectEventType('genderparty')" style="color: #aaa; text-decoration: none;">Gender Party</a></li>
+            <li><a href="#" onclick="selectEventType('anniversary')" style="color: #aaa; text-decoration: none;">Юбилей</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>О сервисе</h4>
+          <ul style="list-style: none; margin-top: 10px;">
+            <li><a href="#" style="color: #aaa; text-decoration: none;">О нас</a></li>
+            <li><a href="#" style="color: #aaa; text-decoration: none;">Контакты</a></li>
+            <li><a href="#" style="color: #aaa; text-decoration: none;">Политика конфиденциальности</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Контакты</h4>
+          <ul style="list-style: none; margin-top: 10px;">
+            <li style="color: #aaa;">📧 hello@inviteservice.com</li>
+            <li style="color: #aaa;">📱 +7 (999) 123-45-67</li>
+          </ul>
+        </div>
+      </div>
+      <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #333; color: #666;">
+        © 2025 InviteService. Все права защищены.
+      </div>
+    </div>
+  </footer>
+
   <script src="/app.js"></script>
   <script>
-    renderMainPage();
+    // Данные шаблонов для показа на главной
+    const catalogTemplates = [
+      { id: 'wedding1', name: 'Классическая свадьба', desc: 'Элегантный дизайн для торжества', image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=400', eventType: 'wedding' },
+      { id: 'wedding2', name: 'Романтическая свадьба', desc: 'Нежные тона и цветы', image: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=400', eventType: 'wedding' },
+      { id: 'birthday1', name: 'Детский праздник', desc: 'Яркий и весёлый дизайн', image: 'https://images.unsplash.com/photo-1464349153735-7db50ed83c5c?w=400', eventType: 'birthday' },
+      { id: 'gender1', name: 'Gender Reveal', desc: 'Узнайте пол малыша вместе с гостями', image: 'https://images.unsplash.com/photo-1610962286282-f2c9b3cfbe17?w=400', eventType: 'genderparty' },
+    ];
+
+    // Загрузка каталога шаблонов
+    function loadCatalog() {
+      const grid = document.getElementById('catalogGrid');
+      if (!grid) return;
+      
+      grid.innerHTML = catalogTemplates.map(tmpl => `
+        <div class="template-card" onclick="selectTemplateFromCatalog('${tmpl.eventType}', '${tmpl.id}')">
+          <div class="template-image" style="background-image: url('${tmpl.image}');"></div>
+          <div class="template-info">
+            <h4>${tmpl.name}</h4>
+            <p>${tmpl.desc}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Функция для выбора шаблона из каталога
+    async function selectTemplateFromCatalog(eventType, templateId) {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Пожалуйста, войдите или зарегистрируйтесь');
+        showLoginModal();
+        return;
+      }
+
+      try {
+        const invitation = await API.fetch('/invitations', {
+          method: 'POST',
+          body: JSON.stringify({ eventType, templateId }),
+        });
+        location.href = `/editor.html?id=${invitation.id}`;
+      } catch(e) {
+        alert('Ошибка: ' + e.message);
+      }
+    }
+
+    // Скролл к шаблонам
+    function scrollToTemplates() {
+      document.getElementById('templates').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Навигация на выбор мероприятия
+    function navigateToEventSelection() {
+      location.href = '/index.html';
+    }
+
+    // Функция для выбора типа мероприятия (из футера)
+    function selectEventType(type) {
+      location.href = '/index.html';
+    }
+
+    // Аккордион для FAQ
+    function initFaq() {
+      const items = document.querySelectorAll('.faq-item');
+      items.forEach(item => {
+        const question = item.querySelector('.faq-question');
+        question.addEventListener('click', () => {
+          item.classList.toggle('active');
+        });
+      });
+    }
+
+    // Инициализация при загрузке
+    document.addEventListener('DOMContentLoaded', () => {
+      loadCatalog();
+      initFaq();
+      
+      // Обновляем кнопки входа если пользователь авторизован
+      const token = localStorage.getItem('token');
+      const navButtons = document.getElementById('navButtons');
+      if (token && navButtons) {
+        navButtons.innerHTML = `
+          <button onclick="location.href='/dashboard.html'">Мои приглашения</button>
+          <button onclick="logout()" class="btn-secondary">Выйти</button>
+        `;
+      }
+    });
   </script>
 </body>
 </html>
