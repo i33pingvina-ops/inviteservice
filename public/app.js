@@ -1,6 +1,7 @@
-// Глобальные переменные
+// ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
 let currentInvitationId = null;
 
+// ==================== ДАННЫЕ ШАБЛОНОВ ====================
 const templates = {
   wedding: [
     { id: 'wedding1', name: 'Классическая свадьба', image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=400', bgImage: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600' },
@@ -18,7 +19,7 @@ const templates = {
   ],
 };
 
-// API функции
+// ==================== API ФУНКЦИИ ====================
 const API = {
   async fetch(endpoint, options = {}) {
     const token = localStorage.getItem('token');
@@ -41,8 +42,12 @@ const API = {
   },
 };
 
-// Авторизация
+// ==================== АВТОРИЗАЦИЯ ====================
 async function showLoginModal() {
+  // Удаляем старый модал, если есть
+  const oldModal = document.getElementById('authModal');
+  if (oldModal) oldModal.remove();
+  
   const modal = document.createElement('div');
   modal.className = 'modal';
   modal.id = 'authModal';
@@ -106,41 +111,47 @@ function logout() {
   location.href = '/index.html';
 }
 
-// Отображение главной страницы
+// ==================== ГЛАВНАЯ СТРАНИЦА ====================
 async function renderMainPage() {
   const token = localStorage.getItem('token');
   const navButtons = document.getElementById('navButtons');
-  if (token) {
-    navButtons.innerHTML = `
-      <button onclick="location.href='/dashboard.html'">Мои приглашения</button>
-      <button onclick="logout()" class="btn-secondary">Выйти</button>
-    `;
-  } else {
-    navButtons.innerHTML = `<button onclick="showLoginModal()">Войти</button>`;
+  if (navButtons) {
+    if (token) {
+      navButtons.innerHTML = `
+        <button onclick="location.href='/dashboard.html'">Мои приглашения</button>
+        <button onclick="logout()" class="btn-secondary">Выйти</button>
+      `;
+    } else {
+      navButtons.innerHTML = `<button onclick="showLoginModal()">Войти</button>`;
+    }
   }
 
-  const events = [
-    { id: 'wedding', name: 'Свадьба', icon: '💒' },
-    { id: 'birthday', name: 'День рождения', icon: '🎂' },
-    { id: 'genderparty', name: 'Gender Party', icon: '🎀' },
-    { id: 'anniversary', name: 'Юбилей', icon: '🎉' },
-  ];
+  // Если есть контент для главной страницы, заполняем его
+  const contentDiv = document.getElementById('content');
+  if (contentDiv) {
+    const events = [
+      { id: 'wedding', name: 'Свадьба', icon: '💒' },
+      { id: 'birthday', name: 'День рождения', icon: '🎂' },
+      { id: 'genderparty', name: 'Gender Party', icon: '🎀' },
+      { id: 'anniversary', name: 'Юбилей', icon: '🎉' },
+    ];
 
-  let html = '<h2>🎯 Выберите тип мероприятия</h2><div class="events-grid">';
-  events.forEach(event => {
-    html += `
-      <div class="card" onclick="selectEvent('${event.id}')">
-        <div class="card-image" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; font-size: 80px;">
-          ${event.icon}
+    let html = '<h2>🎯 Выберите тип мероприятия</h2><div class="events-grid">';
+    events.forEach(event => {
+      html += `
+        <div class="card" onclick="selectEvent('${event.id}')">
+          <div class="card-image" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; font-size: 80px;">
+            ${event.icon}
+          </div>
+          <div class="card-content">
+            <div class="card-title">${event.name}</div>
+          </div>
         </div>
-        <div class="card-content">
-          <div class="card-title">${event.name}</div>
-        </div>
-      </div>
-    `;
-  });
-  html += '</div>';
-  document.getElementById('content').innerHTML = html;
+      `;
+    });
+    html += '</div>';
+    contentDiv.innerHTML = html;
+  }
 }
 
 async function selectEvent(eventType) {
@@ -161,6 +172,7 @@ async function selectEvent(eventType) {
   document.getElementById('content').innerHTML = html;
 }
 
+// ==================== ВЫБОР ШАБЛОНА (общий) ====================
 async function selectTemplate(eventType, templateId) {
   const token = localStorage.getItem('token');
   if (!token) {
@@ -180,7 +192,7 @@ async function selectTemplate(eventType, templateId) {
   }
 }
 
-// Редактор
+// ==================== РЕДАКТОР ====================
 async function loadEditor() {
   const urlParams = new URLSearchParams(window.location.search);
   const id = urlParams.get('id');
@@ -193,16 +205,24 @@ async function loadEditor() {
       method: 'GET',
     });
     
-    document.getElementById('eventTitle').value = invitation.title || '';
-    document.getElementById('eventDescription').value = invitation.description || '';
-    document.getElementById('eventDate').value = invitation.eventDate || '';
-    document.getElementById('eventLocation').value = invitation.eventLocation || '';
-    document.getElementById('customQuestions').value = (invitation.customQuestions || []).join(', ');
+    const titleInput = document.getElementById('eventTitle');
+    const descInput = document.getElementById('eventDescription');
+    const dateInput = document.getElementById('eventDate');
+    const locationInput = document.getElementById('eventLocation');
+    const questionsInput = document.getElementById('customQuestions');
+    
+    if (titleInput) titleInput.value = invitation.title || '';
+    if (descInput) descInput.value = invitation.description || '';
+    if (dateInput) dateInput.value = invitation.eventDate || '';
+    if (locationInput) locationInput.value = invitation.eventLocation || '';
+    if (questionsInput) questionsInput.value = (invitation.customQuestions || []).join(', ');
     
     updatePreview();
     
-    ['eventTitle', 'eventDescription', 'eventDate', 'eventLocation', 'customQuestions'].forEach(field => {
-      document.getElementById(field).addEventListener('input', updatePreview);
+    const fields = ['eventTitle', 'eventDescription', 'eventDate', 'eventLocation', 'customQuestions'];
+    fields.forEach(field => {
+      const el = document.getElementById(field);
+      if (el) el.addEventListener('input', updatePreview);
     });
     
   } catch(e) {
@@ -211,38 +231,45 @@ async function loadEditor() {
 }
 
 function updatePreview() {
-  const title = document.getElementById('eventTitle').value || 'Название события';
-  const desc = document.getElementById('eventDescription').value || 'Описание мероприятия';
-  const date = document.getElementById('eventDate').value || 'Дата будет объявлена';
-  const location = document.getElementById('eventLocation').value || 'Место проведения';
-  const questions = document.getElementById('customQuestions').value;
+  const title = document.getElementById('eventTitle')?.value || 'Название события';
+  const desc = document.getElementById('eventDescription')?.value || 'Описание мероприятия';
+  const date = document.getElementById('eventDate')?.value || 'Дата будет объявлена';
+  const location = document.getElementById('eventLocation')?.value || 'Место проведения';
+  const questions = document.getElementById('customQuestions')?.value || '';
   
-  document.getElementById('previewTitle').textContent = title;
-  document.getElementById('previewDesc').textContent = desc;
-  document.getElementById('previewDate').innerHTML = `📅 ${date}`;
-  document.getElementById('previewLocation').innerHTML = `📍 ${location}`;
+  const previewTitle = document.getElementById('previewTitle');
+  const previewDesc = document.getElementById('previewDesc');
+  const previewDate = document.getElementById('previewDate');
+  const previewLocation = document.getElementById('previewLocation');
+  const previewQuestions = document.getElementById('previewQuestions');
   
-  const questionsDiv = document.getElementById('previewQuestions');
-  if (questions && questions.trim()) {
-    const qList = questions.split(',').map(q => q.trim()).filter(q => q);
-    if (qList.length > 0) {
-      questionsDiv.innerHTML = '<h4>❓ Вопросы для гостей:</h4><ul>' + qList.map(q => `<li>${q}</li>`).join('') + '</ul>';
-      questionsDiv.style.display = 'block';
+  if (previewTitle) previewTitle.textContent = title;
+  if (previewDesc) previewDesc.textContent = desc;
+  if (previewDate) previewDate.innerHTML = `📅 ${date}`;
+  if (previewLocation) previewLocation.innerHTML = `📍 ${location}`;
+  
+  if (previewQuestions) {
+    if (questions && questions.trim()) {
+      const qList = questions.split(',').map(q => q.trim()).filter(q => q);
+      if (qList.length > 0) {
+        previewQuestions.innerHTML = '<h4>❓ Вопросы для гостей:</h4><ul>' + qList.map(q => `<li>${q}</li>`).join('') + '</ul>';
+        previewQuestions.style.display = 'block';
+      } else {
+        previewQuestions.style.display = 'none';
+      }
     } else {
-      questionsDiv.style.display = 'none';
+      previewQuestions.style.display = 'none';
     }
-  } else {
-    questionsDiv.style.display = 'none';
   }
 }
 
 async function saveInvitation() {
   const data = {
-    title: document.getElementById('eventTitle').value,
-    description: document.getElementById('eventDescription').value,
-    eventDate: document.getElementById('eventDate').value,
-    eventLocation: document.getElementById('eventLocation').value,
-    customQuestions: document.getElementById('customQuestions').value.split(',').map(q => q.trim()).filter(q => q),
+    title: document.getElementById('eventTitle')?.value || '',
+    description: document.getElementById('eventDescription')?.value || '',
+    eventDate: document.getElementById('eventDate')?.value || '',
+    eventLocation: document.getElementById('eventLocation')?.value || '',
+    customQuestions: (document.getElementById('customQuestions')?.value || '').split(',').map(q => q.trim()).filter(q => q),
   };
   
   await API.fetch(`/invitations/${currentInvitationId}`, {
@@ -268,7 +295,7 @@ async function payAndPublish() {
   }
 }
 
-// Дашборд
+// ==================== ДАШБОРД ====================
 async function loadDashboard() {
   const token = localStorage.getItem('token');
   if (!token) {
@@ -278,9 +305,12 @@ async function loadDashboard() {
   
   try {
     const invitationsList = await API.fetch('/user/invitations', { method: 'GET' });
+    const contentDiv = document.getElementById('content');
+    
+    if (!contentDiv) return;
     
     if (invitationsList.length === 0) {
-      document.getElementById('content').innerHTML = `
+      contentDiv.innerHTML = `
         <h2>📭 У вас пока нет приглашений</h2>
         <button onclick="location.href='/index.html'">➕ Создать первое приглашение</button>
       `;
@@ -303,7 +333,7 @@ async function loadDashboard() {
       `;
     });
     html += '</div>';
-    document.getElementById('content').innerHTML = html;
+    contentDiv.innerHTML = html;
   } catch(e) {
     alert('Ошибка загрузки: ' + e.message);
   }
@@ -314,11 +344,14 @@ function editInvitation(id) {
 }
 
 async function viewResponses(invitationId) {
+  const contentDiv = document.getElementById('content');
+  if (!contentDiv) return;
+  
   try {
     const responses = await API.fetch(`/responses/${invitationId}`, { method: 'GET' });
     
     if (responses.length === 0) {
-      document.getElementById('content').innerHTML = `
+      contentDiv.innerHTML = `
         <h2>📊 Ответы гостей</h2>
         <p>Пока никто не ответил на приглашение</p>
         <button onclick="loadDashboard()" class="btn-secondary">← Назад</button>
@@ -340,13 +373,48 @@ async function viewResponses(invitationId) {
       `;
     });
     html += '<button onclick="loadDashboard()" class="btn-secondary">← Назад</button>';
-    document.getElementById('content').innerHTML = html;
+    contentDiv.innerHTML = html;
   } catch(e) {
     alert('Ошибка загрузки ответов: ' + e.message);
   }
 }
 
-// Экспортируем функции в глобальный объект window
+// ==================== НОВЫЕ ФУНКЦИИ ДЛЯ ГЛАВНОЙ СТРАНИЦЫ ====================
+function scrollToTemplates() {
+  const templatesSection = document.getElementById('templates');
+  if (templatesSection) {
+    templatesSection.scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+function navigateToEventSelection() {
+  location.href = '/index.html';
+}
+
+function selectEventType(type) {
+  location.href = '/index.html';
+}
+
+async function selectTemplateFromCatalog(eventType, templateId) {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    alert('Пожалуйста, войдите или зарегистрируйтесь');
+    showLoginModal();
+    return;
+  }
+
+  try {
+    const invitation = await API.fetch('/invitations', {
+      method: 'POST',
+      body: JSON.stringify({ eventType, templateId }),
+    });
+    location.href = `/editor.html?id=${invitation.id}`;
+  } catch(e) {
+    alert('Ошибка: ' + e.message);
+  }
+}
+
+// ==================== ЭКСПОРТ В ГЛОБАЛЬНЫЙ ОБЪЕКТ window ====================
 window.login = login;
 window.register = register;
 window.closeModal = closeModal;
@@ -362,3 +430,9 @@ window.loadEditor = loadEditor;
 window.loadDashboard = loadDashboard;
 window.showLoginModal = showLoginModal;
 window.updatePreview = updatePreview;
+
+// Новые функции для главной страницы
+window.scrollToTemplates = scrollToTemplates;
+window.navigateToEventSelection = navigateToEventSelection;
+window.selectEventType = selectEventType;
+window.selectTemplateFromCatalog = selectTemplateFromCatalog;
