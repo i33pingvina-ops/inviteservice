@@ -31,6 +31,28 @@
       margin-bottom: 20px;
       color: #333;
     }
+    .schedule-section {
+      text-align: left;
+      margin: 30px 0;
+      padding: 20px;
+      background: #f7f7f7;
+      border-radius: 20px;
+    }
+    .schedule-section h3 {
+      margin-bottom: 15px;
+      color: #333;
+    }
+    .schedule-item {
+      padding: 10px 0;
+      border-bottom: 1px dashed #ddd;
+    }
+    .wishes-section {
+      background: #fef9e6;
+      padding: 20px;
+      border-radius: 20px;
+      margin: 30px 0;
+      text-align: left;
+    }
     .rsvp-form {
       background: #f7f7f7;
       padding: 30px;
@@ -80,6 +102,34 @@
         if (!response.ok) throw new Error('Приглашение не найдено');
         const inv = await response.json();
         
+        // Генерация расписания
+        let scheduleHtml = '';
+        if (inv.schedule && inv.schedule.length > 0) {
+          scheduleHtml = `
+            <div class="schedule-section">
+              <h3>📋 Расписание дня</h3>
+              ${inv.schedule.map(item => `
+                <div class="schedule-item">
+                  <strong>${escapeHtml(item.time) || 'Время уточняется'}</strong> — ${escapeHtml(item.title) || ''}
+                  ${item.description ? `<br><span style="font-size: 14px; color: #666;">${escapeHtml(item.description)}</span>` : ''}
+                </div>
+              `).join('')}
+            </div>
+          `;
+        }
+        
+        // Генерация пожеланий
+        let wishesHtml = '';
+        if (inv.coupleWishes && inv.coupleWishes.trim()) {
+          wishesHtml = `
+            <div class="wishes-section">
+              <strong>💝 Пожелания организаторов:</strong>
+              <p style="margin-top: 10px;">${escapeHtml(inv.coupleWishes)}</p>
+            </div>
+          `;
+        }
+        
+        // Генерация вопросов для гостей
         let questionsHtml = '';
         if (inv.customQuestions && inv.customQuestions.length > 0) {
           questionsHtml = '<h3>📋 Пожалуйста, ответьте на вопросы:</h3>';
@@ -113,6 +163,9 @@
               <p>📅 ${inv.eventDate || 'Дата уточняется'}</p>
               <p>📍 ${inv.eventLocation || 'Место уточняется'}</p>
               ${inv.backgroundImageUrl ? `<img src="${inv.backgroundImageUrl}" style="width:100%; border-radius:15px; margin:20px 0;">` : ''}
+              
+              ${scheduleHtml}
+              ${wishesHtml}
               
               <div class="rsvp-form">
                 <h3>Пожалуйста, подтвердите присутствие</h3>
